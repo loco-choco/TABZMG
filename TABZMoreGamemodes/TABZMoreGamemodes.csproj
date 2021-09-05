@@ -49,12 +49,20 @@
     <Reference Include="UnityEngine">
       <HintPath>..\..\..\..\..\..\TABZ modded v5\GAME_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\TABZ modded v5\GAME_Data\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Arena\ArenaGamemode.cs" />
+    <Compile Include="Arena\ArenaScoreBoard.cs" />
+    <Compile Include="Arena\ArenaScoreBoardUI.cs" />
+    <Compile Include="GamemodeSelector.cs" />
     <Compile Include="Helpers\HarmonyFixes.cs" />
     <Compile Include="Helpers\HealthHandlerEditing.cs" />
     <Compile Include="Helpers\HealthHandlerPatches.cs" />
+    <Compile Include="MenuCreator.cs" />
     <Compile Include="ModInnit.cs" />
     <Compile Include="Helpers\NetworkManagerPatches.cs" />
     <Compile Include="Helpers\SpawnPointManagerEditing.cs" />

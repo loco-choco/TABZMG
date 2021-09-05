@@ -12,7 +12,6 @@ namespace TABZMGamemodes
         [IMOWAModInnit("TABZMoreGamemodes", -1, 1)]
         static public void Innit(string startingPoint)
         {
-            Debug.Log("Mod innititif");
             if (!HasThePatchesBeenRun)
             {
                 try
@@ -22,10 +21,6 @@ namespace TABZMGamemodes
                     SpawnPointManagerEditing.Patch(harmony);
                     NetworkManagerEditing.Patch(harmony);
                     HasThePatchesBeenRun = true;
-
-                    AccessTools.StaticFieldRefAccess<string>(typeof(MainMenuHandler), "mVersionString") += "-Arena";
-                    PhotonNetwork.Disconnect();
-                    PhotonNetwork.ConnectUsingSettings(MainMenuHandler.VERSION_NUMBER);
                 }
                 catch (Exception ex)
                 {
@@ -39,10 +34,11 @@ namespace TABZMGamemodes
         }
         static private void RunOnMenu()
         {
+            MenuCreator.CreateGamemodesMenu();
         }
         static private void RunOnGame()
         {
-            new GameObject("ArenaHandler").AddComponent<Arena.ArenaGamemode>();
+            GamemodeSelector.PlayChoosenGamemode();
         }
     }
 }

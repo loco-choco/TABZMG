@@ -36,22 +36,34 @@ namespace TABZMGamemodes.Arena
             },
         };
         private static readonly float RespawnTime = 0.5f;
+        public static void GamemodeInnit()
+        {
+            new GameObject("ArenaHandler").AddComponent<ArenaGamemode>();
+            
+            GameObject.Find("CitadelSpawns").SetActive(false);
+            GameObject.Find("ItemSpawns").SetActive(false);
+
+            GameObject networkManager = GameObject.Find("NetworkManager");
+            networkManager.GetComponent<NetworkZombieSpawner>().enabled = false;
+            networkManager.AddComponent<ArenaScoreBoard>();
+            networkManager.AddComponent<ArenaScoreBoardUI>();
+        }
         public void Awake()
         {
             SpawnPointManagerEditing.SetSpawnPoints(SpawnPointSetOne);
             HealthHandlerEditing.ChangeRespawnTime(RespawnTime);
             NetworkManagerEditing.OnPlayerSpawned += NetworkManagerEditing_OnPlayerSpawned;
 
-            SpawnBarrier();
+            SpawnBarrier(new Vector3(1031f, 100f, 637f));
             HealthHandlerEditing.KillLocalPlayer();
         }
-        public void SpawnBarrier()
+        public void SpawnBarrier(Vector3 position)
         {
             GameObject barrier = Instantiate(GameObject.Find("rusty_pipe_straight"));
             barrier.transform.parent = null;
-            barrier.transform.position = new Vector3(1031f, 100f, 637f);
+            barrier.transform.position = position;
             barrier.transform.rotation = Quaternion.identity;
-            barrier.transform.localScale = 538f * new Vector3(10f, 1, 10f);
+            barrier.transform.localScale = 540f * new Vector3(10f, 1, 10f);
         }
         public void OnDestroy()
         {
