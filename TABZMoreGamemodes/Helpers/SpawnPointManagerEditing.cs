@@ -6,7 +6,7 @@ namespace TABZMGamemodes
     {
         private static Vector3[] SpawnPositions = new Vector3[] { };
         private static bool useDefaultSpawns = true;
-
+       
         public static void SetSpawnPoints(params Vector3[] spawnPositions)
         {
             SpawnPositions = spawnPositions;
@@ -28,7 +28,7 @@ namespace TABZMGamemodes
         {
             if (!useDefaultSpawns && SpawnPositions.Length>0)
             {
-                int randomIndex = Random.Range(0, SpawnPositions.Length - 1);
+                int randomIndex = Random.Range(0, SpawnPositions.Length);
                 __result = SpawnPositions[randomIndex];
             }
         }

@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
-using CAMOWA;
-using HarmonyLib;
-using System;
 
+using HarmonyLib;
+using CAMOWA;
 namespace TABZMGamemodes
 {
     public class ModInnit : MonoBehaviour
@@ -32,6 +31,7 @@ namespace TABZMGamemodes
             else if (SceneManagerHelper.ActiveSceneBuildIndex == 1)
                 RunOnGame();
         }
+
         static private void RunOnMenu()
         {
             MenuCreator.CreateGamemodesMenu();

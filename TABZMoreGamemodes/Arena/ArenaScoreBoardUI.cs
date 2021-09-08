@@ -8,70 +8,73 @@ namespace TABZMGamemodes.Arena
     public class ArenaScoreBoardUI : MonoBehaviour
     {
         public Text Objective;
-        public List<PlayerScoreUI> Scores = new List<PlayerScoreUI>();
-        public ArenaScoreBoard arenaScoreBoard;
+        public Text LocalPlayerDeathScoreText;
+        public Text LocalPlayerDamageScoreText;
+        public Text LocalPlayerItemRankScoreText;
         private Vector3 distanceFromText = new Vector3(0f, -20f, 0f);
+
+        private int deathScore = 0;
+
+        public ArenaGamemode gamemodeData;
         public void Awake()
         {
             NetworkManagerEditing.OnPlayerSpawned += NetworkManagerEditing_OnPlayerSpawned;
         }
-        public void Start()
-        {
-            arenaScoreBoard = GetComponent<ArenaScoreBoard>();
-        }
-            public void OnDestroy()
+        public void OnDestroy()
         {
             NetworkManagerEditing.OnPlayerSpawned -= NetworkManagerEditing_OnPlayerSpawned;
         }
+        private bool ignoreFirstPoint = true;
         private void NetworkManagerEditing_OnPlayerSpawned(PhotonView playerView)
         {
+            Debug.Log("Criando UI");
             StartCoroutine("CreateUI");
+            deathScore++;
+            if (ignoreFirstPoint)
+                deathScore--;
+
+            ignoreFirstPoint = false;
         }
-        public IEnumerable CreateUI()
+        public IEnumerator CreateUI()
         {
             yield return new WaitForSeconds(Time.deltaTime * 4f);
             Transform uiCanvas = NetworkManager.LocalPlayerPhotonView.transform.Find("UI_Canvas");
             Transform playersInLobby = uiCanvas.Find("PlayersInLobby");
 
             Objective = CreateText(uiCanvas, playersInLobby);
-            Objective.transform.localPosition -= distanceFromText;
-            Objective.text = "Wins at " + arenaScoreBoard.ObjectiveScore;
+            Objective.transform.localPosition += distanceFromText;
+            Objective.text = string.Format("CHANGES WEAPON AT {0} DAMAGE", gamemodeData.DamageNeededToChangeWeapons.ToString("F0"));
+            Vector3 previousPosition = Objective.transform.localPosition;
 
-            for (int i =0; i< arenaScoreBoard.ScoreBoard.Count;i++)
-            {
-                PlayerPoints p = arenaScoreBoard.ScoreBoard[i];
-                Text playerScore = CreateText(uiCanvas, playersInLobby);
-                playerScore.transform.localPosition -= distanceFromText * (i + 2);
-                playerScore.text = string.Format("{0} - {1}", p.Player, p.Points);
-                Scores.Add(new PlayerScoreUI(playerScore, p.Player));
-            }
+
+            LocalPlayerDeathScoreText = CreateText(uiCanvas, playersInLobby);
+            LocalPlayerDeathScoreText.transform.localPosition = previousPosition + distanceFromText;
+            LocalPlayerDeathScoreText.text = string.Format("{0} DEATHS", deathScore);
+
+            previousPosition = LocalPlayerDeathScoreText.transform.localPosition;
+
+            LocalPlayerDamageScoreText = CreateText(uiCanvas, playersInLobby);
+            LocalPlayerDamageScoreText.transform.localPosition = previousPosition + distanceFromText;
+            LocalPlayerDamageScoreText.text = string.Format("{0} DAMAGE DEALT", gamemodeData.DamageDeltByLocalPlayer.ToString("F0"));
+
+            previousPosition = LocalPlayerDamageScoreText.transform.localPosition;
+
+            LocalPlayerItemRankScoreText = CreateText(uiCanvas, playersInLobby);
+            LocalPlayerItemRankScoreText.transform.localPosition = previousPosition + distanceFromText;
+            LocalPlayerItemRankScoreText.text = string.Format("ITEM RANK {0}", gamemodeData.ItemRank + 1);
         }
-        public void UpdatePlayerScore(int player, int score)
+        public void Update()
         {
-            var playerPoints = Scores.Find(s => s.Player == player);
-            if(playerPoints != null)
-                playerPoints.Score.text = string.Format("{0} - {1}", player, score);
-            else
-            {
-                Transform uiCanvas = NetworkManager.LocalPlayerPhotonView.transform.Find("UI_Canvas");
-                Transform playersInLobby = uiCanvas.Find("PlayersInLobby");
+            if (LocalPlayerDeathScoreText != null)
+                LocalPlayerDeathScoreText.text = string.Format("{0} DEATHS", deathScore);
 
-                Text playerScore = CreateText(uiCanvas, playersInLobby);
-                playerScore.transform.localPosition -= distanceFromText * (Scores.Count + 1);
+            if (LocalPlayerDamageScoreText != null)
+                LocalPlayerDamageScoreText.text = string.Format("{0} DAMAGE DEALT", gamemodeData.DamageDeltByLocalPlayer.ToString("F0"));
 
-                playerScore.text = string.Format("{0} - {1}", player, score);
-                Scores.Add(new PlayerScoreUI(playerScore, player));
-            }
+            if (LocalPlayerItemRankScoreText != null)
+                LocalPlayerItemRankScoreText.text = string.Format("ITEM RANK {0}", gamemodeData.ItemRank + 1);
         }
-        public void RemovePlayerScore(int player)
-        {
-            var playerPoints = Scores.Find(s => s.Player == player);
-            if (playerPoints == null)
-                return;
 
-            Destroy(playerPoints.Score);
-            Scores.Remove(playerPoints);
-        }
         public Text CreateText(Transform parent, Transform reference)
         {
             Text text = Instantiate(reference).GetComponent<Text>();
@@ -81,17 +84,6 @@ namespace TABZMGamemodes.Arena
             text.transform.localScale = reference.localScale;
             text.color = Color.white;
             return text;
-        }
-    }
-    public class PlayerScoreUI
-    {
-        public Text Score;
-        public int Player;
-
-        public PlayerScoreUI(Text Score, int Player)
-        {
-            this.Score = Score;
-            this.Player = Player;
         }
     }
 }

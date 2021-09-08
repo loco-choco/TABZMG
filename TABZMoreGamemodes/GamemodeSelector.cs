@@ -20,6 +20,7 @@ namespace TABZMGamemodes
             new GamemodeData(){ GamemodeName = "Survival",
             UniqueVersionIdentifierPostfix = "",
             GamemodeInnit = null},
+
             new GamemodeData(){ GamemodeName = "Arena",
             UniqueVersionIdentifierPostfix = "Arena",
             GamemodeInnit = Arena.ArenaGamemode.GamemodeInnit},
