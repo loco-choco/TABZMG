@@ -9,7 +9,7 @@ namespace TABZMGamemodes.Arena
     {
         public Text Objective;
         public Text LocalPlayerDeathScoreText;
-        public Text LocalPlayerDamageScoreText;
+        public Text LocalPlayerKillScoreText;
         public Text LocalPlayerItemRankScoreText;
         private Vector3 distanceFromText = new Vector3(0f, -20f, 0f);
 
@@ -19,6 +19,7 @@ namespace TABZMGamemodes.Arena
         public void Awake()
         {
             NetworkManagerEditing.OnPlayerSpawned += NetworkManagerEditing_OnPlayerSpawned;
+            StartCoroutine("UpdatePerSecond");
         }
         public void OnDestroy()
         {
@@ -43,7 +44,7 @@ namespace TABZMGamemodes.Arena
 
             Objective = CreateText(uiCanvas, playersInLobby);
             Objective.transform.localPosition += distanceFromText;
-            Objective.text = string.Format("CHANGES WEAPON AT {0} DAMAGE", gamemodeData.DamageNeededToChangeWeapons.ToString("F0"));
+            Objective.text = string.Format("CHANGES WEAPON AT EVERY {0} KILLS", gamemodeData.KillsNeededToChangeWeapons);
             Vector3 previousPosition = Objective.transform.localPosition;
 
 
@@ -53,26 +54,35 @@ namespace TABZMGamemodes.Arena
 
             previousPosition = LocalPlayerDeathScoreText.transform.localPosition;
 
-            LocalPlayerDamageScoreText = CreateText(uiCanvas, playersInLobby);
-            LocalPlayerDamageScoreText.transform.localPosition = previousPosition + distanceFromText;
-            LocalPlayerDamageScoreText.text = string.Format("{0} DAMAGE DEALT", gamemodeData.DamageDeltByLocalPlayer.ToString("F0"));
+            LocalPlayerKillScoreText = CreateText(uiCanvas, playersInLobby);
+            LocalPlayerKillScoreText.transform.localPosition = previousPosition + distanceFromText;
+            LocalPlayerKillScoreText.text = string.Format("{0} KILLS", gamemodeData.KillsMadeByLocalPlayer);
 
-            previousPosition = LocalPlayerDamageScoreText.transform.localPosition;
+            previousPosition = LocalPlayerKillScoreText.transform.localPosition;
 
             LocalPlayerItemRankScoreText = CreateText(uiCanvas, playersInLobby);
             LocalPlayerItemRankScoreText.transform.localPosition = previousPosition + distanceFromText;
             LocalPlayerItemRankScoreText.text = string.Format("ITEM RANK {0}", gamemodeData.ItemRank + 1);
         }
-        public void Update()
+        public IEnumerator UpdatePerSecond()
         {
+            if (Objective != null)
+                Objective.text = string.Format("CHANGES WEAPON AT EVERY {0} KILLS", gamemodeData.KillsNeededToChangeWeapons);
+
             if (LocalPlayerDeathScoreText != null)
                 LocalPlayerDeathScoreText.text = string.Format("{0} DEATHS", deathScore);
 
-            if (LocalPlayerDamageScoreText != null)
-                LocalPlayerDamageScoreText.text = string.Format("{0} DAMAGE DEALT", gamemodeData.DamageDeltByLocalPlayer.ToString("F0"));
+            if (LocalPlayerKillScoreText != null)
+                LocalPlayerKillScoreText.text = string.Format("{0} KILLS", gamemodeData.KillsMadeByLocalPlayer);
 
             if (LocalPlayerItemRankScoreText != null)
+            {
                 LocalPlayerItemRankScoreText.text = string.Format("ITEM RANK {0}", gamemodeData.ItemRank + 1);
+                if (gamemodeData.ItemRankCompletitions > 0)
+                    LocalPlayerItemRankScoreText.text += string.Format(" x {0}", gamemodeData.ItemRankCompletitions);
+            }
+
+            yield return new WaitForSeconds(1f);
         }
 
         public Text CreateText(Transform parent, Transform reference)

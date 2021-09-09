@@ -1,74 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace TABZMGamemodes.Arena
 {
     public class ArenaGamemode : MonoBehaviour
     {
-        private static readonly Vector3[] SpawnPointSetOne = new Vector3[]
-        {
-            new Vector3(1024,73,663),
-            new Vector3(976,83,662),
-            new Vector3(978,83,686),
-            new Vector3(975,85,707),
-        };
-        private static readonly ArenaKit[] KitSetOne = new ArenaKit[]
-        {
-            new ArenaKit
-            {
-                Weapons = new string[]{ "Items/Makarov"},
-                Ammo = new KeyValuePair<string, int>[]{ new KeyValuePair<string, int>("Items/AmmoSmall", 12) }
-            },
-            new ArenaKit
-            {
-                Weapons = new string[]{"Items/Scorpion"},
-                Ammo = new KeyValuePair<string, int>[]{ new KeyValuePair<string, int>("Items/AmmoSmall", 24) }
-            },
-            new ArenaKit
-            {
-                Weapons = new string[]{ "Items/Revolver", "Items/Revolver"},
-                Ammo = new KeyValuePair<string, int>[]{ new KeyValuePair<string, int>("Items/AmmoMedium", 3) }
-            },
+        private Vector3 ArenaPosition = ArenaGamemodeData.ArenaPositionTwo;
+        private Vector3 ArenaScale = ArenaGamemodeData.ArenaScaleTwo;
+        private Vector3[] SpawnPointSet = ArenaGamemodeData.SpawnPointSetTwo;
+        private ArenaKit[] KitSet = ArenaGamemodeData.KitSetOne;
 
-            new ArenaKit
-            {
-                Weapons = new string[]{ "Items/Ak74"},
-                Ammo = new KeyValuePair<string, int>[]{ new KeyValuePair<string, int>("Items/AmmoMedium", 25)}
-            },
-			new ArenaKit
-            {
-                Weapons = new string[]{ "Items/Mp5"},
-                Ammo = new KeyValuePair<string, int>[]{ new KeyValuePair<string, int>("Items/AmmoSmall", 35)}
-            },			            
-                       			
-			new ArenaKit
-            {
-                Weapons = new string[]{"Items/HuntingSniper"},
-                Ammo = new KeyValuePair<string, int>[]{new KeyValuePair<string, int>("Items/AmmoBig", 1)}
-            },
-             new ArenaKit
-            {
-                Weapons = new string[]{ "Items/Musket"},
-                Ammo = new KeyValuePair<string, int>[]{ new KeyValuePair<string, int>("Items/AmmoMedium", 1) }
-            },
-
-            new ArenaKit
-            {
-                Weapons = new string[]{"Items/Axe"},
-                Ammo = new KeyValuePair<string, int>[]{}
-            },
-            new ArenaKit
-            {
-                Weapons = new string[]{"Items/HuntingKnife"},
-                Ammo = new KeyValuePair<string, int>[]{}
-            },
-            new ArenaKit
-            {
-                Weapons = new string[]{},
-                Ammo = new KeyValuePair<string, int>[]{}
-            },
-        };
         private static readonly float RespawnTime = 0.5f;
         public static void GamemodeInnit()
         {
@@ -77,23 +20,23 @@ namespace TABZMGamemodes.Arena
 
             GameObject.Find("CitadelSpawns").SetActive(false);
             //GameObject.Find("ItemSpawns").SetActive(false);
-            
+
             GameObject networkManager = GameObject.Find("NetworkManager");
             networkManager.GetComponent<NetworkZombieSpawner>().enabled = false;
         }
         public void Awake()
         {
-            SpawnPointManagerEditing.SetSpawnPoints(SpawnPointSetOne);
+            SpawnPointManagerEditing.SetSpawnPoints(SpawnPointSet);
             HealthHandlerEditing.ChangeRespawnTime(RespawnTime);
             NetworkManagerEditing.OnPlayerSpawned += NetworkManagerEditing_OnPlayerSpawned;
-            HealthHandlerEditing.OnTakeDamage += HealthHandlerEditing_OnTakeDamage;
+            HealthHandlerEditing.OnKill += HealthHandlerEditing_OnKill;
 
-            SpawnBarrier(new Vector3(1031f, 100f, 637f));
+            SpawnBarrier(ArenaPosition, ArenaScale);
             HealthHandlerEditing.KillLocalPlayer();
         }
         public void Update()
         {
-            if(hasFinishedCleaning)
+            if (hasFinishedCleaning)
             {
                 StartCoroutine("DestroyAllDropedItems");
                 hasFinishedCleaning = false;
@@ -104,26 +47,27 @@ namespace TABZMGamemodes.Arena
         {
             yield return new WaitForSeconds(1f);
             InventoryItem[] allItems = FindObjectsOfType<InventoryItem>();
-            
-                foreach (var item in allItems)
-                    if(item.enabled && item.photonView.isMine)
-                        PhotonNetwork.Destroy(item.photonView);
+
+            foreach (var item in allItems)
+                if (item.enabled && item.photonView.isMine)
+                    PhotonNetwork.Destroy(item.photonView);
 
             hasFinishedCleaning = true;
         }
-        public void SpawnBarrier(Vector3 position)
+        public void SpawnBarrier(Vector3 position, Vector3 scale)
         {
             GameObject barrier = Instantiate(GameObject.Find("rusty_pipe_straight"));
             barrier.transform.parent = null;
             barrier.transform.position = position;
             barrier.transform.rotation = Quaternion.identity;
-            barrier.transform.localScale = 540f * new Vector3(10f, 1, 10f);
+            barrier.transform.localScale = scale;
         }
         public void OnDestroy()
         {
             SpawnPointManagerEditing.UseDefaultSpawnPoints();
             HealthHandlerEditing.ResetRespawnTime();
             NetworkManagerEditing.OnPlayerSpawned -= NetworkManagerEditing_OnPlayerSpawned;
+            HealthHandlerEditing.OnKill -= HealthHandlerEditing_OnKill;
         }
 
         private void NetworkManagerEditing_OnPlayerSpawned(PhotonView playerView)
@@ -131,27 +75,38 @@ namespace TABZMGamemodes.Arena
             GivePlayerItems();
         }
 
-        public float DamageDeltByLocalPlayer {get;private set;}= 0;
-        public float DamageNeededToChangeWeapons {get;private set;} = 200f;
-        private void HealthHandlerEditing_OnTakeDamage(HealthHandler damaged, float damage, PhotonPlayer damager, bool isKillingBlow)
+        public int KillsMadeByLocalPlayer { get; private set; } = 0;
+        public int KillsNeededToChangeWeapons { get; private set; } = 2;
+        private void HealthHandlerEditing_OnKill(HealthHandler damaged, float damage, PhotonPlayer damager)
         {
-            if (damager == null)
+            ZombieBlackboard zB = damaged.GetComponent<ZombieBlackboard>();
+            if (damager == null || zB == null)
                 return;
-            if(damaged.photonView != NetworkManager.LocalPlayerPhotonView && damager.IsLocal)
+            if (zB.Behaviour == BTType.ZOMBIE)
+                return;
+            if (damaged.photonView.viewID != NetworkManager.LocalPlayerPhotonView.viewID && damager.IsLocal)
             {
-                DamageDeltByLocalPlayer += damage;
-                if(DamageDeltByLocalPlayer> DamageNeededToChangeWeapons)
-                {
-                    ItemRank = (ItemRank + 1) % KitSetOne.Length;
-                    GivePlayerItems();
-                    NetworkManager.LocalPlayerPhotonView.RPC("RecieveHealth", damager, 98f);//Doing this so the HealthHandler can give the last two health points and update the hud xP
-                    DamageDeltByLocalPlayer = 0f;
-                }
+                GivePrizeForReachingGoal();
             }
         }
-
+        private void GivePrizeForReachingGoal()
+        {
+            KillsMadeByLocalPlayer++;
+            if (KillsMadeByLocalPlayer % KillsNeededToChangeWeapons == 0)
+            {
+                ItemRank++;
+                if (ItemRank % KitSet.Length == 0)
+                {
+                    ItemRankCompletitions++;
+                    KillsNeededToChangeWeapons++;
+                }
+                GivePlayerItems();
+                NetworkManager.LocalPlayerPhotonView.RPC("RecieveHealth", null, 99.9f);//99.9 instead of 100 so the hud can update itself
+            }
+        }
         public int ItemRank { get; private set; } = 0;
-        private void GivePlayerItems(bool random = false,bool cleanInventory = true)
+        public int ItemRankCompletitions { get; private set; } = 0;
+        private void GivePlayerItems(bool random = false, bool cleanInventory = true)
         {
             if (cleanInventory)
             {
@@ -160,9 +115,13 @@ namespace TABZMGamemodes.Arena
             }
             List<InventoryItem> items;
             if (random)
+            {
                 items = GetRandomItems();
+            }
             else
-                items = GetItems(ItemRank % KitSetOne.Length);
+            {
+                items = GetItems(ItemRank % KitSet.Length);
+            }
 
             foreach (var item in items)
                 item.TryPickup();
@@ -171,10 +130,10 @@ namespace TABZMGamemodes.Arena
         {
             List<InventoryItem> items = new List<InventoryItem>();
 
-            foreach (string s in KitSetOne[index].Weapons)
+            foreach (string s in KitSet[index].Weapons)
                 items.Add(PhotonNetwork.Instantiate(s, Vector2.zero, Quaternion.identity, 0).GetComponent<InventoryItem>());
 
-            foreach (var a in KitSetOne[index].Ammo)
+            foreach (var a in KitSet[index].Ammo)
             {
                 InventoryItemAmmo ammo = PhotonNetwork.Instantiate(a.Key, Vector2.zero, Quaternion.identity, 0).GetComponent<InventoryItemAmmo>();
                 ammo.Amount = a.Value;
@@ -184,11 +143,11 @@ namespace TABZMGamemodes.Arena
         }
         private List<InventoryItem> GetRandomItems()
         {
-            int randomIndex = Random.Range(0, KitSetOne.Length);
+            int randomIndex = Random.Range(0, KitSet.Length);
             return GetItems(randomIndex);
         }
     }
-    struct ArenaKit
+    public struct ArenaKit
     {
         public string[] Weapons;
         public KeyValuePair<string, int>[] Ammo;

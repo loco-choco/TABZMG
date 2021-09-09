@@ -56,6 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Arena\ArenaGamemode.cs" />
+    <Compile Include="Arena\ArenaGamemodeData.cs" />
     <Compile Include="Arena\ArenaScoreBoard.cs" />
     <Compile Include="Arena\ArenaScoreBoardUI.cs" />
     <Compile Include="GamemodeSelector.cs" />

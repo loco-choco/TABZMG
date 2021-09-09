@@ -1,26 +1,37 @@
 ﻿//using System.Collections.Generic;
+//using System.Linq;
+//using Photon;
 //using UnityEngine;
 
 //namespace TABZMGamemodes.Arena
 //{
-//    public class ArenaScoreBoard : MonoBehaviour
+//    public class ArenaScoreBoard : PunBehaviour
 //    {
-//        public List<PlayerPoints> ScoreBoard = new List<PlayerPoints>();
-//        public int ObjectiveScore { get; private set; }
-//        public ArenaScoreBoardUI arenaUI;
-
+//        public Dictionary<int, PlayerPoints> ScoreBoard = new Dictionary<int, PlayerPoints>();
+//        int LocalPlayerID;
 //        public void Start()
 //        {
-//            arenaUI = GetComponent<ArenaScoreBoardUI>();
-//            ObjectiveScore = 10;
+//            LocalPlayerID = PhotonNetwork.player.ID;
 //        }
-//        public void OnDestroy()
+//        public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
 //        {
-//            gameObject.GetPhotonView().RPC("PlayerLeft", PhotonTargets.Others, gameObject.GetPhotonView().ownerId);
+//            base.OnPhotonPlayerConnected(newPlayer);
+//            if (PhotonNetwork.isMasterClient)
+//            {
+//                ScoreBoard.Add(newPlayer.ID, new PlayerPoints(newPlayer.ID, 0));
+//            }
+//        }
+//        public override void OnPhotonPlayerDisconnected(PhotonPlayer otherPlayer)
+//        {
+//            base.OnPhotonPlayerDisconnected(otherPlayer);
+//            if (PhotonNetwork.isMasterClient)
+//            {
+//                ScoreBoard.Remove(otherPlayer.ID);
+//            }
 //        }
 //        public PlayerPoints GetLocalPlayerScore()
 //        {
-//            PlayerPoints playerPoints = ScoreBoard.Find(s => s.Player == NetworkManager.LocalPlayerPhotonView.ownerId);
+//            ScoreBoard.TryGetValue(LocalPlayerID, out PlayerPoints playerPoints);
 //            return playerPoints;
 //        }
 //        [PunRPC]
@@ -36,22 +47,8 @@
 //                playerPoints = new PlayerPoints(owner, points);
 //                ScoreBoard.Add(playerPoints);
 //            }
-//            arenaUI.UpdatePlayerScore(owner, points);
-
-//            if (playerPoints.Points >= ObjectiveScore)
-//                OnWinner?.Invoke(owner);
 //        }
         
-//        [PunRPC]
-//        public void PlayerLeft(int owner)
-//        {
-//            PlayerPoints playerPoints = ScoreBoard.Find(s => s.Player == owner);
-//            if (playerPoints != null)
-//            {
-//                ScoreBoard.Remove(playerPoints);
-//            }
-//        }
-
 //        public delegate void OnWin(int winner);
 //        public event OnWin OnWinner;
 //    }

@@ -22,7 +22,14 @@ namespace TABZMGamemodes
 
         public static void TakeDamagePrefix(HealthHandler __instance, float dmg, PhotonPlayer player, bool killingBlow)
         {
-            HealthHandlerEditing.InvokeOnTakeDamage(__instance, dmg, player, killingBlow);
+            if (!__instance.dead)
+            {
+                if (__instance.currentHealth - dmg > 0 && !killingBlow)
+                    HealthHandlerEditing.InvokeOnTakeDamage(__instance, dmg, player);
+                else
+                    HealthHandlerEditing.InvokeOnKill(__instance, dmg, player);
+            }
+            HealthHandlerEditing.InvokeOnTakeDamageEvenIfDead(__instance, dmg, player);
         }
     }
 }
