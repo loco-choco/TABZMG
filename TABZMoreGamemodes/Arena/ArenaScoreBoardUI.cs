@@ -16,25 +16,28 @@ namespace TABZMGamemodes.Arena
         private int deathScore = 0;
 
         public ArenaGamemode gamemodeData;
-        public void Awake()
+        public void Start()
         {
             NetworkManagerEditing.OnPlayerSpawned += NetworkManagerEditing_OnPlayerSpawned;
             StartCoroutine("UpdatePerSecond");
-        }
+            gamemodeData.OnResetStats += GamemodeData_OnResetStats;
+        }        
         public void OnDestroy()
         {
             NetworkManagerEditing.OnPlayerSpawned -= NetworkManagerEditing_OnPlayerSpawned;
+            gamemodeData.OnResetStats -= GamemodeData_OnResetStats;
         }
-        private bool ignoreFirstPoint = true;
+        private void GamemodeData_OnResetStats()
+        {
+            deathScore = -1;
+        }
         private void NetworkManagerEditing_OnPlayerSpawned(PhotonView playerView)
         {
+            if (gamemodeData.CurrentArenaMap == null)
+                return;
             Debug.Log("Criando UI");
             StartCoroutine("CreateUI");
             deathScore++;
-            if (ignoreFirstPoint)
-                deathScore--;
-
-            ignoreFirstPoint = false;
         }
         public IEnumerator CreateUI()
         {
@@ -65,24 +68,30 @@ namespace TABZMGamemodes.Arena
             LocalPlayerItemRankScoreText.text = string.Format("ITEM RANK {0}", gamemodeData.ItemRank + 1);
         }
         public IEnumerator UpdatePerSecond()
-        {
-            if (Objective != null)
-                Objective.text = string.Format("CHANGES WEAPON AT EVERY {0} KILLS", gamemodeData.KillsNeededToChangeWeapons);
-
-            if (LocalPlayerDeathScoreText != null)
-                LocalPlayerDeathScoreText.text = string.Format("{0} DEATHS", deathScore);
-
-            if (LocalPlayerKillScoreText != null)
-                LocalPlayerKillScoreText.text = string.Format("{0} KILLS", gamemodeData.KillsMadeByLocalPlayer);
-
-            if (LocalPlayerItemRankScoreText != null)
+        {            
+            while (true)
             {
-                LocalPlayerItemRankScoreText.text = string.Format("ITEM RANK {0}", gamemodeData.ItemRank + 1);
-                if (gamemodeData.ItemRankCompletitions > 0)
-                    LocalPlayerItemRankScoreText.text += string.Format(" x {0}", gamemodeData.ItemRankCompletitions);
-            }
+                if (gamemodeData.CurrentArenaMap == null)
+                    yield return new WaitForSeconds(1f);
 
-            yield return new WaitForSeconds(1f);
+                if (Objective != null)
+                    Objective.text = string.Format("CHANGES WEAPON AT EVERY {0} KILLS", gamemodeData.KillsNeededToChangeWeapons);
+
+                if (LocalPlayerDeathScoreText != null)
+                    LocalPlayerDeathScoreText.text = string.Format("{0} DEATHS", deathScore);
+
+                if (LocalPlayerKillScoreText != null)
+                    LocalPlayerKillScoreText.text = string.Format("{0} KILLS", gamemodeData.KillsMadeByLocalPlayer);
+
+                if (LocalPlayerItemRankScoreText != null)
+                {
+                    LocalPlayerItemRankScoreText.text = string.Format("ITEM RANK {0}", gamemodeData.ItemRank + 1);
+                    if (gamemodeData.ItemRankCompletitions > 0)
+                        LocalPlayerItemRankScoreText.text += string.Format(" x {0}", gamemodeData.ItemRankCompletitions);
+                }
+
+                yield return new WaitForSeconds(1f);
+            }
         }
 
         public Text CreateText(Transform parent, Transform reference)

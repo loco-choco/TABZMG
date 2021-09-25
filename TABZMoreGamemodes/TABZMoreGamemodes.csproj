@@ -31,15 +31,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>..\..\..\DIMOWA\Instalador\0Harmony.dll</HintPath>
+    <Reference Include="0Harmony, Version=2.0.0.10, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\TABZ modded v5\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\..\..\..\TABZ modded v5\GAME_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="CAMOWA, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\DIMOWA\CAMOWA\bin\Release\CAMOWA.dll</HintPath>
+    <Reference Include="BepInEx">
+      <HintPath>..\..\..\..\..\..\TABZ modded v5\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -57,10 +57,12 @@
   <ItemGroup>
     <Compile Include="Arena\ArenaGamemode.cs" />
     <Compile Include="Arena\ArenaGamemodeData.cs" />
-    <Compile Include="Arena\ArenaScoreBoard.cs" />
+    <Compile Include="Arena\ArenaMapSelector.cs" />
     <Compile Include="Arena\ArenaScoreBoardUI.cs" />
+    <Compile Include="Arena\ArenaVotingSystem.cs" />
+    <Compile Include="Arena\Lobby\ArenaLobby.cs" />
+    <Compile Include="Arena\Lobby\LobbyCreateData.cs" />
     <Compile Include="GamemodeSelector.cs" />
-    <Compile Include="Helpers\HarmonyFixes.cs" />
     <Compile Include="Helpers\HealthHandlerEditing.cs" />
     <Compile Include="Helpers\HealthHandlerPatches.cs" />
     <Compile Include="MenuCreator.cs" />

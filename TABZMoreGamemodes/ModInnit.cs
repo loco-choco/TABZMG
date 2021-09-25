@@ -1,42 +1,45 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 using HarmonyLib;
-using CAMOWA;
+using BepInEx;
 namespace TABZMGamemodes
 {
-    public class ModInnit : MonoBehaviour
+
+    [BepInPlugin("Locochoco.plugins.TABZMoreGamemodes", "More Gamemodes Mod", "1.0.0.0")]
+    [BepInProcess("GAME.exe")] //TABZ executable
+    public class ModInnit : BaseUnityPlugin
     {
-        private static bool HasThePatchesBeenRun = false;
-        [IMOWAModInnit("TABZMoreGamemodes", -1, 1)]
-        static public void Innit(string startingPoint)
+        public void Awake()
         {
-            if (!HasThePatchesBeenRun)
-            {
                 try
                 {
                     Harmony harmony = new Harmony("Locochoco.TABZMoreGamemodes");
                     HealthHandlerPatches.Patches(harmony);
                     SpawnPointManagerEditing.Patch(harmony);
                     NetworkManagerEditing.Patch(harmony);
-                    HasThePatchesBeenRun = true;
+
+                SceneManager.sceneLoaded += SceneManager_sceneLoaded;
                 }
                 catch (Exception ex)
                 {
                     Debug.Log(ex.Message);
                 }
-            }
-            if (SceneManagerHelper.ActiveSceneBuildIndex == 0)
-                RunOnMenu();
-            else if (SceneManagerHelper.ActiveSceneBuildIndex == 1)
-                RunOnGame();
         }
 
-        static private void RunOnMenu()
+        private static void SceneManager_sceneLoaded(Scene scene, LoadSceneMode loadMode)
+        {
+            if (scene.buildIndex == 0)
+                RunOnMenu();
+            else if (scene.buildIndex == 1)
+                RunOnGame();
+        }
+        private static void RunOnMenu()
         {
             MenuCreator.CreateGamemodesMenu();
         }
-        static private void RunOnGame()
+        private static void RunOnGame()
         {
             GamemodeSelector.PlayChoosenGamemode();
         }
